@@ -1,0 +1,8 @@
+[package]
+authors = ["Jun Suzuki <jun.suzuki.japan@gmail.com>"]
+name = "line-botty"
+version = "0.1.0"
+
+[dependencies]
+docopt = "0.6.86"
+rustc-serialize = "0.3.22"
