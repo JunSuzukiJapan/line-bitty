@@ -3,48 +3,51 @@
 extern crate rustc_serialize;
 extern crate docopt;
 
+use std::env;
+use std::path::Path;
+use std::process::Command;
 use docopt::Docopt;
 
 static USAGE: &'static str = "
 Usage:
   line-botty create [--path <path>] [--name <name>]
-  line-botty npm (add | remove) [<args>...]
   line-botty build
-  line-botty install --url <url>
-  line-botty deploy [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
-  line-botty deploy function [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
-  line-botty deploy list [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
-  line-botty invoke  [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
-  line-botty invoke local [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
-  line-botty info [--stage <stage>] [--region <region>] [--verbose]
-  line-botty logs [--function <name>] [--stage <stage>] [--region <region>] [--tail] [--startTime <time>] [--filter <pattern>] [--interval <milliseconds>]
-  line-botty metrics [--function <function>] [--stage <stage>] [--region <region>] [--startTime <time>] [--endTime <time>]
-  line-botty remove [--stage <stage>] [--region <region>] [--verbose]
-  line-botty rollback [--timestamp <timestamp>] [--verbose]
-  line-botty slstats (--enable | --disable)
+  line-botty npm (install | uninstall) <args>...
+  line-botty sls install --url <url>
+  line-botty sls deploy [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls deploy function [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls deploy list [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls invoke  [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
+  line-botty sls invoke local [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
+  line-botty sls info [--stage <stage>] [--region <region>] [--verbose]
+  line-botty sls logs [--function <name>] [--stage <stage>] [--region <region>] [--tail] [--startTime <time>] [--filter <pattern>] [--interval <milliseconds>]
+  line-botty sls metrics [--function <function>] [--stage <stage>] [--region <region>] [--startTime <time>] [--endTime <time>]
+  line-botty sls remove [--stage <stage>] [--region <region>] [--verbose]
+  line-botty sls rollback [--timestamp <timestamp>] [--verbose]
+  line-botty sls slstats (--enable | --disable)
   line-botty (--help | --version)
 
 Options:
-  -u, --url <url>
-  -s, --stage <stage>
-  -r, --region <region>
-      --noDeploy
-  -v, --verbose
-     --type <type>
-  -l, --log
   -d, --data
-  -p, --path <path>
-  -n, --name <name>
-  -f, --function <name>
-  -t, --tail
-  -s, --startTime <time>
   -e, --endTime <time>
-      --filter <filter>
-  -i, --interval <milliseconds>
-      --timestamp <timestamp>
-      --enable
-      --disable
+  -f, --function <name>
   -h, --help
+  -i, --interval <milliseconds>
+  -l, --log
+  -n, --name <name>
+  -p, --path <path>
+  -r, --region <region>
+  -s, --stage <stage>
+  -t, --tail
+  -u, --url <url>
+  -v, --verbose
+      --disable
+      --enable
+      --filter <filter>
+      --noDeploy
+      --startTime <time>
+      --timestamp <timestamp>
+      --type <type>
       --version
 ";
 
@@ -52,18 +55,20 @@ Options:
 pub struct Args {
     cmd_create: bool,
     cmd_build: bool,
+    cmd_npm: bool,
+    cmd_remove: bool,
+    cmd_sls: bool,
     cmd_install: bool,
+    cmd_uninstall: bool,
     cmd_deploy: bool,
     cmd_function: bool,
     cmd_invoke: bool,
     cmd_local: bool,
     cmd_info: bool,
     cmd_logs: bool,
-    cmd_npm: bool,
     cmd_metrics: bool,
-    cmd_add: bool,
-    cmd_remove: bool,
     cmd_rollback: bool,
+    cmd_slstats: bool,
 
     flag_url: String,
     flag_stage: String,
@@ -86,11 +91,76 @@ pub struct Args {
     flag_disable: bool,
     flag_help: bool,
     flag_version: bool,
+
+    arg_args: Vec<String>,
 }
 
 fn main() {
     let args: Args = Docopt::new(USAGE)
             .and_then(|d| d.decode())
             .unwrap_or_else(|e| e.exit());
-    println!("{:?}", args);
+    //println!("{:?}", args);
+
+    if args.cmd_sls {
+        sls_commands(args);
+        std::process::exit(0);
+     } else if args.cmd_npm {
+        npm_commands(args);
+        std::process::exit(0);
+    } else if args.cmd_create {
+        create_commands(args);
+    } else if args.cmd_build {
+        build_commands();
+    }
+}
+
+fn chdir_src() {
+    let root = Path::new("./src");
+    if env::set_current_dir(&root).is_err() {
+        panic!("didnot change directory to ./src");
+    }
+}
+
+fn create_commands(args: Args){
+
+}
+
+fn build_commands(){
+
+}
+
+fn npm_commands(args: Args){
+    chdir_src();
+
+    let mut cmd = Command::new("npm");
+    cmd.arg("--save");
+
+    if args.cmd_install {
+        cmd.arg("install");
+    } else if args.cmd_uninstall {
+        cmd.arg("uninstall");
+    }
+    for arg in args.arg_args {
+        cmd.arg(arg);
+    }
+    cmd.output()
+       .expect("failed to execute process");
+}
+
+fn sls_commands(args: Args){
+    if args.cmd_install {
+
+    } else if args.cmd_deploy {
+
+    } else if args.cmd_invoke {
+    } else if args.cmd_info {
+
+    } else if args.cmd_logs {
+
+    } else if args.cmd_metrics {
+    } else if args.cmd_remove {
+    } else if args.cmd_rollback {
+
+    } else if args.cmd_slstats {
+    }
 }
