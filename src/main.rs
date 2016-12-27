@@ -2,15 +2,22 @@
 
 extern crate rustc_serialize;
 extern crate docopt;
+extern crate git2;
+extern crate copperline;
 
 use std::env;
 use std::path::Path;
+//use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::fs::File;
+use std::io::Write;
 use docopt::Docopt;
+use git2::Repository;
+use copperline::Copperline;
 
 static USAGE: &'static str = "
 Usage:
-  line-botty create [--path <path>] [--name <name>]
+  line-botty create [--path <path>] [--name <name>] [--token <token>]
   line-botty build
   line-botty npm (install | uninstall) <args>...
   line-botty sls install --url <url>
@@ -38,7 +45,7 @@ Options:
   -p, --path <path>
   -r, --region <region>
   -s, --stage <stage>
-  -t, --tail
+  -t, --token <token>
   -u, --url <url>
   -v, --verbose
       --disable
@@ -46,6 +53,7 @@ Options:
       --filter <filter>
       --noDeploy
       --startTime <time>
+      --tail
       --timestamp <timestamp>
       --type <type>
       --version
@@ -70,23 +78,24 @@ pub struct Args {
     cmd_rollback: bool,
     cmd_slstats: bool,
 
-    flag_url: String,
-    flag_stage: String,
-    flag_region: String,
+    flag_token: Option<String>,
+    flag_url: Option<String>,
+    flag_stage: Option<String>,
+    flag_region: Option<String>,
     flag_noDeploy: bool,
     flag_verbose: bool,
-    flag_type: String,
+    flag_type: Option<String>,
     flag_log: bool,
     flag_data: bool,
     flag_tail: bool,
-    flag_startTime: String,
-    flag_endTime: String,
-    flag_filter: String,
-    flag_interval: i64,
-    flag_path: String,
-    flag_name: String,
-    flag_function: String,
-    flag_timestamp: String,
+    flag_startTime: Option<String>,
+    flag_endTime: Option<String>,
+    flag_filter: Option<String>,
+    flag_interval: Option<i64>,
+    flag_path: Option<String>,
+    flag_name: Option<String>,
+    flag_function: Option<String>,
+    flag_timestamp: Option<String>,
     flag_enable: bool,
     flag_disable: bool,
     flag_help: bool,
@@ -121,14 +130,77 @@ fn chdir_src() {
     }
 }
 
+//   line-botty create [--path <path>] [--name <name>] [--token <token>]
 fn create_commands(args: Args){
+    let mut token: String = String::new();
+    if let Some(tok) = args.flag_token {
+        token.push_str(&tok);        
+    }else{
+        let cfg = copperline::Config {
+            encoding: copperline::Encoding::Utf8,
+            mode: copperline::EditMode::Emacs,
+        };
 
+        let mut cl = Copperline::new();
+        if let Ok(line) = cl.read_line("input your line message API access token: ", &cfg) {
+            //cl.add_history(line);
+            token.push_str(&line);
+        }
+    }
+
+    //let mut cmd = Command::new("sls");
+    //cmd.arg("-t")
+    //   .arg("aws-nodejs");
+
+    let mut p = String::from(".");
+    if let Some(path) = args.flag_path {
+        //cmd.arg("--path")
+        //   .arg(&path);
+
+        p = String::from(path);
+    }
+
+    // git clone
+    let url = "https://github.com/JunSuzukiJapan/line-bot-ts-template.git";
+    let _ = match Repository::clone(url, &p) {
+        Ok(repo) => repo,
+        Err(e) => panic!("failed to clone: {}", e),
+    };    
+
+    // create src/token.ts
+    let mut f = File::create("./src/token.ts").unwrap();
+    f.write_all(format!("export const accessToken = '{}';", token).as_bytes()).unwrap();
+
+    // fix package.json
+
+
+
+
+/*
+    // move to src directory
+    let mut pathbuf = PathBuf::from(&p);
+    pathbuf.push("src");
+    
+    if env::set_current_dir(&pathbuf.as_path()).is_err() {
+        panic!("didnot change directory to {}", pathbuf.to_string_lossy());
+    }
+
+    // serverless create
+
+    //if let Some(name) = args.flag_name {
+    //    cmd.arg("--name")
+    //       .arg(name);
+    //}
+    //cmd.output()
+    //   .expect("failed to execute process");
+*/
 }
 
 fn build_commands(){
 
 }
 
+//   line-botty npm (install | uninstall) <args>...
 fn npm_commands(args: Args){
     chdir_src();
 
@@ -147,20 +219,122 @@ fn npm_commands(args: Args){
        .expect("failed to execute process");
 }
 
+/*
+  line-botty sls install --url <url>
+  line-botty sls deploy [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls deploy function [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls deploy list [--stage <stage>] [--region <region>] [--noDeploy] [--verbose]
+  line-botty sls invoke  [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
+  line-botty sls invoke local [--function <name>] [--stage <stage>] [--region <region>] [--path <path>] [--type <type>] [--log] [--data]
+  line-botty sls info [--stage <stage>] [--region <region>] [--verbose]
+  line-botty sls logs [--function <name>] [--stage <stage>] [--region <region>] [--tail] [--startTime <time>] [--filter <pattern>] [--interval <milliseconds>]
+  line-botty sls metrics [--function <function>] [--stage <stage>] [--region <region>] [--startTime <time>] [--endTime <time>]
+  line-botty sls remove [--stage <stage>] [--region <region>] [--verbose]
+  line-botty sls rollback [--timestamp <timestamp>] [--verbose]
+  line-botty sls slstats (--enable | --disable)
+*/
 fn sls_commands(args: Args){
+    chdir_src();
+    let mut cmd = Command::new("serverless");
+
     if args.cmd_install {
+        cmd.arg("install");
+        if let Some(url) = args.flag_url {
+            cmd.arg("--url")
+               .arg(url);
+        }
 
     } else if args.cmd_deploy {
+        cmd.arg("deploy");
+        if args.flag_noDeploy {
+            cmd.arg("--noDeploy");
+        }
 
     } else if args.cmd_invoke {
+        cmd.arg("invoke");
+        if args.cmd_local {
+            cmd.arg("local");
+        }
+        if let Some(path) = args.flag_path {
+            cmd.arg("--path")
+               .arg(path);
+        }
+        if let Some(typ) = args.flag_type {
+            cmd.arg("--type")
+               .arg(typ);
+        }
+        if args.flag_log {
+            cmd.arg("--log");
+        }
+        if args.flag_data {
+            cmd.arg("--data");
+        }
+
     } else if args.cmd_info {
+        cmd.arg("info");
 
     } else if args.cmd_logs {
+        cmd.arg("logs");
+        if args.flag_tail {
+            cmd.arg("--tail");
+        }
+        if let Some(filter) = args.flag_filter {
+            cmd.arg("--filter")
+               .arg(filter);
+        }
+        if let Some(ms) = args.flag_interval {
+            cmd.arg("--interval")
+               .arg(ms.to_string());
+        }
 
     } else if args.cmd_metrics {
-    } else if args.cmd_remove {
-    } else if args.cmd_rollback {
+        cmd.arg("metrics");
 
+    } else if args.cmd_remove {
+        cmd.arg("remove");
+
+    } else if args.cmd_rollback {
+        cmd.arg("rollback");
+
+        if let Some(timestamp) = args.flag_timestamp {
+            cmd.arg("--timestamp")
+               .arg(timestamp);
+        }
     } else if args.cmd_slstats {
+        cmd.arg("slstats");
+
+        if args.flag_enable {
+            cmd.arg("enable");
+        }else {
+            cmd.arg("disable");
+        }
     }
+
+    if let Some(function) = args.flag_function {
+        cmd.arg("--function")
+            .arg(function);
+    }
+    if let Some(stage) = args.flag_stage {
+        cmd.arg("--stage")
+            .arg(stage);
+    }
+    if let Some(region) = args.flag_region {
+        cmd.arg("--region")
+            .arg(region);
+    }
+    if let Some(time) = args.flag_startTime {
+        cmd.arg("--startTime")
+           .arg(time);
+    }
+    if let Some(time) = args.flag_endTime {
+        cmd.arg("--endTime")
+           .arg(time);
+    }
+    // option --verbose
+    if args.flag_verbose {
+        cmd.arg("--verbose");
+    }
+
+    cmd.output()
+    .expect("failed to execute process");
 }
