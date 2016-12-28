@@ -331,6 +331,8 @@ fn npm_commands(args: Args){
   line-botty sls slstats (--enable | --disable)
 */
 fn sls_commands(args: Args){
+    build_commands();
+
     chdir_dest();
     let mut cmd = Command::new("serverless");
 
