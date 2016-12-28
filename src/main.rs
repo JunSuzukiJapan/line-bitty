@@ -110,9 +110,8 @@ pub struct Args {
 
 fn main() {
     let args: Args = Docopt::new(USAGE)
-            .and_then(|d| d.decode())
-            .unwrap_or_else(|e| e.exit());
-    //println!("{:?}", args);
+        .and_then(|d| d.decode())
+        .unwrap_or_else(|e| e.exit());
 
     if args.cmd_sls {
         sls_commands(args);
@@ -159,15 +158,8 @@ fn create_commands(args: Args){
         }
     }
 
-    //let mut cmd = Command::new("sls");
-    //cmd.arg("-t")
-    //   .arg("aws-nodejs");
-
     let mut p = String::from(".");
     if let Some(path) = args.flag_path {
-        //cmd.arg("--path")
-        //   .arg(&path);
-
         p = String::from(path);
     }
 
@@ -188,7 +180,6 @@ fn create_commands(args: Args){
     f.read_to_string(&mut s);
 
     let mut jf = json_flex::decode(s);
-    //println!("{}", jf.to_json());
 
     if let Some(name) = args.flag_name {
         let mut map: HashMap<std::string::String, json_flex::JFObject> = HashMap::new();
@@ -205,13 +196,12 @@ fn create_commands(args: Args){
         jf = Box::new(json_flex::JFObject::Dictionary(map));
     }
 
+    //
     // write to src/package.json
-    //let s = jf.to_json();
-
+    //
     let json_path = "./src/package.json";
     let _ = fs::remove_file(json_path);
     let mut file = File::create(json_path).unwrap();
-    //file.write(s.as_bytes());
 
     file.write(b"{\n");
 
@@ -254,25 +244,6 @@ br#"  "dependencies": {
     }
 
     file.write(b"}");
-
-/*
-    // move to src directory
-    let mut pathbuf = PathBuf::from(&p);
-    pathbuf.push("src");
-    
-    if env::set_current_dir(&pathbuf.as_path()).is_err() {
-        panic!("didnot change directory to {}", pathbuf.to_string_lossy());
-    }
-
-    // serverless create
-
-    //if let Some(name) = args.flag_name {
-    //    cmd.arg("--name")
-    //       .arg(name);
-    //}
-    //cmd.output()
-    //   .expect("failed to execute process");
-*/
 }
 
 fn build_commands(){
