@@ -269,7 +269,15 @@ br#"  "dependencies": {
 }
 
 fn build_commands(){
+    let mut cmd = Command::new("npm");
+    cmd.arg("install")
+       .output()
+       .expect("failed to execute process");
 
+    let mut cmd = Command::new("make");
+    cmd.arg("build")
+       .output()
+       .expect("failed to execute process");
 }
 
 //   line-botty npm (install | uninstall) <args>...
