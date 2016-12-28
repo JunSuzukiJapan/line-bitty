@@ -271,11 +271,17 @@ br#"  "dependencies": {
 fn build_commands(){
     let mut cmd = Command::new("npm");
     cmd.arg("install")
+       .stdin(std::process::Stdio::inherit())
+       .stdout(std::process::Stdio::inherit())
+       .stderr(std::process::Stdio::inherit())
        .output()
        .expect("failed to execute process");
 
     let mut cmd = Command::new("make");
     cmd.arg("build")
+       .stdin(std::process::Stdio::inherit())
+       .stdout(std::process::Stdio::inherit())
+       .stderr(std::process::Stdio::inherit())
        .output()
        .expect("failed to execute process");
 }
@@ -295,7 +301,11 @@ fn npm_commands(args: Args){
     for arg in args.arg_args {
         cmd.arg(arg);
     }
-    cmd.output()
+    cmd
+       .stdin(std::process::Stdio::inherit())
+       .stdout(std::process::Stdio::inherit())
+       .stderr(std::process::Stdio::inherit())
+       .output()
        .expect("failed to execute process");
 }
 
@@ -415,6 +425,10 @@ fn sls_commands(args: Args){
         cmd.arg("--verbose");
     }
 
-    cmd.output()
-    .expect("failed to execute process");
+    cmd
+       .stdin(std::process::Stdio::inherit())
+       .stdout(std::process::Stdio::inherit())
+       .stderr(std::process::Stdio::inherit())
+       .output()
+       .expect("failed to execute process");
 }
