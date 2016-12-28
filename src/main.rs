@@ -134,6 +134,13 @@ fn chdir_src() {
     }
 }
 
+fn chdir_dest() {
+    let root = Path::new("./dest");
+    if env::set_current_dir(&root).is_err() {
+        panic!("didnot change directory to ./dest");
+    }
+}
+
 //   line-botty create [--path <path>] [--name <name>] [--token <token>]
 fn create_commands(args: Args){
     let mut token: String = String::new();
@@ -324,7 +331,7 @@ fn npm_commands(args: Args){
   line-botty sls slstats (--enable | --disable)
 */
 fn sls_commands(args: Args){
-    chdir_src();
+    chdir_dest();
     let mut cmd = Command::new("serverless");
 
     if args.cmd_install {
