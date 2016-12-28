@@ -279,8 +279,7 @@ fn npm_commands(args: Args){
     for arg in args.arg_args {
         cmd.arg(arg);
     }
-    cmd
-       .stdin(std::process::Stdio::inherit())
+    cmd.stdin(std::process::Stdio::inherit())
        .stdout(std::process::Stdio::inherit())
        .stderr(std::process::Stdio::inherit())
        .output()
@@ -405,8 +404,7 @@ fn sls_commands(args: Args){
         cmd.arg("--verbose");
     }
 
-    cmd
-       .stdin(std::process::Stdio::inherit())
+    cmd.stdin(std::process::Stdio::inherit())
        .stdout(std::process::Stdio::inherit())
        .stderr(std::process::Stdio::inherit())
        .output()
