@@ -1,19 +1,23 @@
 #![allow(non_snake_case)]
+#![allow(unused_must_use)]
 
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate git2;
 extern crate copperline;
+extern crate json_flex;
 
 use std::env;
 use std::path::Path;
-//use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use docopt::Docopt;
 use git2::Repository;
 use copperline::Copperline;
+use json_flex::JFObject;
+use std::collections::HashMap;
 
 static USAGE: &'static str = "
 Usage:
@@ -172,9 +176,77 @@ fn create_commands(args: Args){
     f.write_all(format!("export const accessToken = '{}';", token).as_bytes()).unwrap();
 
     // fix package.json
+    let mut f = File::open("./src/package.json").unwrap();
+    let mut s = String::new();
+    f.read_to_string(&mut s);
 
+    let mut jf = json_flex::decode(s);
+    //println!("{}", jf.to_json());
 
+    if let Some(name) = args.flag_name {
+        let mut map: HashMap<std::string::String, json_flex::JFObject> = HashMap::new();
 
+        if let Some(m) = jf.into_hashmap() {
+            for (key, val) in m {
+                if key == "name" {
+                    map.insert(key.clone(), JFObject::String(name.clone()));
+                }else{
+                    map.insert(key.clone(), val.clone());
+                }
+            }
+        }
+        jf = Box::new(json_flex::JFObject::Dictionary(map));
+    }
+
+    // write to src/package.json
+    //let s = jf.to_json();
+
+    let json_path = "./src/package.json";
+    let _ = fs::remove_file(json_path);
+    let mut file = File::create(json_path).unwrap();
+    //file.write(s.as_bytes());
+
+    file.write(b"{\n");
+
+    if let Some(m) = jf.into_hashmap() {
+        if let Some(obj) = m.get("name") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"name\": \"{}\",\n", s));
+        }
+        if let Some(obj) = m.get("version") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"version\": \"{}\",\n", s));
+        }
+        if let Some(obj) = m.get("description") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"description\": \"{}\",\n", s));
+        }
+        if let Some(obj) = m.get("author") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"author\": \"{}\",\n", s));
+        }
+        if let Some(obj) = m.get("license") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"license\": \"{}\",\n", s));
+        }
+        if let Some(obj) = m.get("main") {
+            let s = obj.into_string().unwrap();
+            file.write_fmt(format_args!("  \"main\": \"{}\",\n", s));
+        }
+
+        // dependencies
+        // scripts
+        file.write(
+br#"  "dependencies": {
+    "superagent": "^3.3.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+"#);
+    }
+
+    file.write(b"}");
 
 /*
     // move to src directory

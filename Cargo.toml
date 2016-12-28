@@ -1,13 +1,16 @@
 [package]
 authors = ["Jun Suzuki <jun.suzuki.japan@gmail.com>"]
-name = "line-botty"
+name = "line_botty"
 version = "0.1.0"
 
 [dependencies]
-docopt = "0.6.86"
-rustc-serialize = "0.3.22"
-git2 = "0.6.3"
 copperline = "0.3.0"
+docopt = "0.6.86"
+git2 = "0.6.3"
+json_flex = "0.3.2"
+rustc-serialize = "0.3.22"
 
 [replace]
-"copperline:0.3.0" = { git = 'https://github.com/srijs/rust-copperline' }
+
+[replace."copperline:0.3.0"]
+git = "https://github.com/srijs/rust-copperline"
