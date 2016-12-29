@@ -2,6 +2,12 @@
 
 Framework of LINE Messaging API Application with AWS Lambda and TypeScript.
 
+# Requirements
+
+- make
+- nodejs
+- gulp
+
 # Install
 
 ## Rust & Cargo のインストール
