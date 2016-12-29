@@ -1,6 +1,6 @@
 # line-botty
 
-Framework of LINE Messaging API Application with AWS Lambda and TypeScript.
+LINE Bot Framework with AWS Lambda and TypeScript.
 
 # Requirements
 
