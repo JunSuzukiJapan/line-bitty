@@ -2,6 +2,8 @@
 authors = ["Jun Suzuki <jun.suzuki.japan@gmail.com>"]
 name = "line_botty"
 version = "0.1.0"
+license = "MIT"
+description = "Framework of LINE Message API Application with AWS Lambda and TypeScript."
 
 [dependencies]
 copperline = "0.3.0"
