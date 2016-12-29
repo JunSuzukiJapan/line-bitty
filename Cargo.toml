@@ -4,6 +4,7 @@ name = "line_botty"
 version = "0.1.0"
 license = "MIT"
 description = "Framework of LINE Message API Application with AWS Lambda and TypeScript."
+repository = "https://github.com/JunSuzukiJapan/line-bitty/tree/master"
 
 [dependencies]
 copperline = "0.3.0"
