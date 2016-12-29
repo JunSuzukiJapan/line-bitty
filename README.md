@@ -1,6 +1,6 @@
 # line-botty
 
-LINE Bot Framework with AWS Lambda and TypeScript.
+LINE Bot Framework with AWS Lambda, Serverless Framework and TypeScript.
 
 # Requirements
 
