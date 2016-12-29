@@ -1,4 +1,4 @@
-# line-bitty
+# line-botty
 
 Framework of LINE Messaging API Application with AWS Lambda and TypeScript.
 
